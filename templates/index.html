@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackLogic - Pushdown Automata Simulator</title>
+    <meta name="description" content="An interactive graphical Pushdown Automata (PDA) simulator for Theory of Computation education.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Top Navigation / Header -->
+        <header class="app-header">
+            <div class="brand-container">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>StackLogic</h1>
+                    <span class="subtitle">Pushdown Automata Simulator &bull; Theory of Computation</span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <div class="preset-selector-group">
+                    <label for="presetSelect"><i class="fa-solid fa-wand-magic-sparkles"></i> Preset Examples:</label>
+                    <select id="presetSelect" class="styled-select">
+                        <option value="">-- Select a Preset PDA --</option>
+                        <option value="anbn">L = { aⁿbⁿ | n ≥ 0 }</option>
+                        <option value="wcwr">L = { wcwᴿ | w ∈ {a,b}* }</option>
+                        <option value="parentheses">Balanced Parentheses</option>
+                    </select>
+                </div>
+                <button id="resetAppBtn" class="btn btn-secondary" title="Reset All Fields">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+            </div>
+        </header>
+
+        <!-- Live Mathematical Configuration Banner -->
+        <div class="config-bar" id="configBar">
+            <div class="config-title">
+                <i class="fa-solid fa-square-root-variable"></i> Current PDA Configuration (q, w, γ):
+            </div>
+            <div class="config-tuple-badge" id="currentConfigDisplay">
+                (q0, 'input', Z)
+            </div>
+            <div class="config-status-badge status-idle" id="simStatusBadge">
+                <i class="fa-solid fa-circle-stop"></i> IDLE
+            </div>
+        </div>
+
+        <!-- Main Dashboard Layout Grid -->
+        <main class="dashboard-grid">
+
+            <!-- LEFT COLUMN: PDA Form & Transition Editor -->
+            <section class="grid-card pda-designer-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-sliders"></i> PDA Definition</h2>
+                    <button id="validatePdaBtn" class="btn btn-sm btn-outline" title="Validate PDA Definition">
+                        <i class="fa-solid fa-check-double"></i> Validate
+                    </button>
+                </div>
+
+                <!-- Validation Alerts Container -->
+                <div id="validationAlert" class="alert-box alert-hidden"></div>
+
+                <div class="form-grid">
+                    <!-- States -->
+                    <div class="form-group">
+                        <label for="statesInput" title="Comma-separated state names (e.g. q0, q1, q2)">
+                            States (Q) <i class="fa-solid fa-circle-info tooltip-icon"></i>
+                        </label>
+                        <input type="text" id="statesInput" placeholder="q0, q1, q2" value="q0, q1, q2">
+                    </div>
+
+                    <!-- Input Alphabet -->
+                    <div class="form-group">
+                        <label for="alphabetInput" title="Input alphabet symbols (e.g. a, b)">
+                            Input Alphabet (Σ) <i class="fa-solid fa-circle-info tooltip-icon"></i>
+                        </label>
+                        <input type="text" id="alphabetInput" placeholder="a, b" value="a, b">
+                    </div>
+
+                    <!-- Stack Alphabet -->
+                    <div class="form-group">
+                        <label for="stackAlphabetInput" title="Stack symbols (e.g. Z, A)">
+                            Stack Alphabet (Γ) <i class="fa-solid fa-circle-info tooltip-icon"></i>
+                        </label>
+                        <input type="text" id="stackAlphabetInput" placeholder="Z, A" value="Z, A">
+                    </div>
+
+                    <!-- Start State -->
+                    <div class="form-group">
+                        <label for="startStateInput">Start State (q₀)</label>
+                        <input type="text" id="startStateInput" placeholder="q0" value="q0">
+                    </div>
+
+                    <!-- Initial Stack Symbol -->
+                    <div class="form-group">
+                        <label for="startSymbolInput">Initial Stack Symbol (Z₀)</label>
+                        <input type="text" id="startSymbolInput" placeholder="Z" value="Z">
+                    </div>
+
+                    <!-- Final States -->
+                    <div class="form-group">
+                        <label for="finalStatesInput">Accepting / Final States (F)</label>
+                        <input type="text" id="finalStatesInput" placeholder="q2" value="q2">
+                    </div>
+                </div>
+
+                <!-- Transition Function Table Editor -->
+                <div class="transition-editor-section">
+                    <div class="section-title-bar">
+                        <h3><i class="fa-solid fa-diagram-project"></i> Transition Function (δ)</h3>
+                        <div class="table-actions">
+                            <button id="addEpsilonBtn" class="btn btn-xs btn-tertiary" title="Insert Epsilon Symbol">
+                                Insert ε
+                            </button>
+                            <button id="addTransitionRowBtn" class="btn btn-xs btn-primary">
+                                <i class="fa-solid fa-plus"></i> Add Transition
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="styled-table" id="transitionTable">
+                            <thead>
+                                <tr>
+                                    <th>Current State</th>
+                                    <th>Read Input</th>
+                                    <th>Stack Top</th>
+                                    <th>Next State</th>
+                                    <th>Stack Push</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transitionTableBody">
+                                <!-- Dynamic Transition Rows rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MIDDLE COLUMN: Visualizations (PDA Graph & Stack) -->
+            <section class="grid-card pda-viz-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-eye"></i> Visualizations</h2>
+                    <div class="viz-toggle-group">
+                        <span class="badge badge-info"><i class="fa-solid fa-circle-dot"></i> Active Node & Edge Highlighted</span>
+                    </div>
+                </div>
+
+                <!-- PDA Graph Visualizer (SVG) -->
+                <div class="viz-panel graph-panel">
+                    <div class="panel-subtitle">State Transition Diagram</div>
+                    <div class="svg-container" id="svgContainer">
+                        <svg id="pdaSvg" width="100%" height="320px"></svg>
+                    </div>
+                </div>
+
+                <!-- Live Dynamic Stack Visualizer -->
+                <div class="viz-panel stack-panel">
+                    <div class="panel-subtitle">
+                        Stack Memory Tower (γ)
+                        <span class="stack-count-badge" id="stackCountBadge">Top &darr;</span>
+                    </div>
+                    <div class="stack-display-container">
+                        <div class="stack-tower-wrapper">
+                            <div class="stack-top-arrow"><i class="fa-solid fa-turn-down"></i> TOP</div>
+                            <div class="stack-tower" id="stackTower">
+                                <!-- Stack Element Blocks Rendered Dynamically -->
+                                <div class="stack-cell stack-empty">Stack Empty</div>
+                            </div>
+                            <div class="stack-base">BOTTOM</div>
+                        </div>
+                        <div class="stack-operation-log" id="stackOpLog">
+                            <div class="op-label">Latest Operation:</div>
+                            <div class="op-badge" id="latestStackOpBadge">Initial Stack</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: Simulator Controls & Educational Theory -->
+            <section class="grid-card pda-sim-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-play"></i> Execution Controls</h2>
+                </div>
+
+                <div class="simulation-form">
+                    <div class="form-group">
+                        <label for="inputString">Input String (w):</label>
+                        <div class="input-with-btn">
+                            <input type="text" id="inputString" placeholder="e.g. aabb" value="aabb" autocomplete="off">
+                            <button id="clearInputBtn" class="btn btn-icon" title="Clear input">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Preset sample string buttons -->
+                    <div class="sample-strings-wrapper" id="sampleStringsWrapper">
+                        <span class="sample-label">Sample inputs:</span>
+                        <div id="sampleInputsList" class="sample-pills">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Control Buttons -->
+                    <div class="control-buttons-grid">
+                        <button id="runSimBtn" class="btn btn-success btn-lg">
+                            <i class="fa-solid fa-play"></i> Auto Run
+                        </button>
+                        <button id="stepSimBtn" class="btn btn-primary btn-lg">
+                            <i class="fa-solid fa-forward-step"></i> Step
+                        </button>
+                        <button id="pauseSimBtn" class="btn btn-warning btn-lg" disabled>
+                            <i class="fa-solid fa-pause"></i> Pause
+                        </button>
+                        <button id="resetSimBtn" class="btn btn-danger btn-lg">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </button>
+                    </div>
+
+                    <!-- Speed Control Slider -->
+                    <div class="speed-control-group">
+                        <label for="speedSlider">Simulation Delay: <span id="speedVal">600ms</span></label>
+                        <input type="range" id="speedSlider" min="100" max="2000" step="100" value="600">
+                    </div>
+
+                    <!-- Execution Result Banner -->
+                    <div class="result-banner result-hidden" id="resultBanner">
+                        <div class="result-icon" id="resultIcon"></div>
+                        <div class="result-details">
+                            <h3 id="resultTitle">Result</h3>
+                            <p id="resultMessage">Description text here</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Theory & Educational Info Panel -->
+                <div class="theory-accordion">
+                    <details class="theory-details" open>
+                        <summary><i class="fa-solid fa-graduation-cap"></i> What is a Pushdown Automaton?</summary>
+                        <div class="theory-content">
+                            <p>A <strong>Pushdown Automaton (PDA)</strong> is a finite state machine augmented with an external <em>Stack Memory</em> (Last-In, First-Out data structure).</p>
+                            <ul>
+                                <li><strong>7-Tuple Definition:</strong> M = (Q, Σ, Γ, δ, q₀, Z₀, F)</li>
+                                <li><strong>Configuration (q, w, γ):</strong> Represents current state <code>q</code>, unread input string <code>w</code>, and current stack contents <code>γ</code>.</li>
+                                <li><strong>Transition δ(q, a, X) = (p, α):</strong> Reads symbol <code>a</code> (or <code>ε</code>), pops top symbol <code>X</code> from stack, moves to state <code>p</code>, and pushes string <code>α</code> onto stack.</li>
+                                <li><strong>Acceptance Condition:</strong> The input string is accepted if the PDA consumes all input symbols and ends up in an accepting state (q &in; F).</li>
+                            </ul>
+                        </div>
+                    </details>
+                </div>
+            </section>
+        </main>
+
+        <!-- BOTTOM SECTION: Simulation Trace Log Table -->
+        <section class="grid-card full-width-card trace-card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-list-check"></i> Step-by-Step Simulation Trace Log</h2>
+                <div class="trace-actions">
+                    <span class="step-count-pill" id="stepCounterPill">Step: 0</span>
+                    <button id="clearTraceBtn" class="btn btn-sm btn-secondary">
+                        <i class="fa-solid fa-trash-can"></i> Clear Trace
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="styled-table trace-table" id="traceTable">
+                    <thead>
+                        <tr>
+                            <th>Step #</th>
+                            <th>Current State</th>
+                            <th>Read Symbol</th>
+                            <th>Consumed</th>
+                            <th>Remaining Input</th>
+                            <th>Stack Before</th>
+                            <th>Applied Transition (δ)</th>
+                            <th>Stack Action</th>
+                            <th>Stack After</th>
+                            <th>Configuration (q, w, γ)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="traceTableBody">
+                        <tr class="empty-row"><td colspan="10">No simulation steps recorded yet. Click <strong>Step</strong> or <strong>Auto Run</strong> to start.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>StackLogic: Pushdown Automata Simulator &bull; College Capstone Project for <strong>Theory of Computation</strong></p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/visualization.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/simulator.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

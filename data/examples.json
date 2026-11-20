@@ -1,0 +1,66 @@
+{
+  "anbn": {
+    "name": "L = { aⁿbⁿ | n ≥ 0 }",
+    "description": "Equal number of 'a's followed by equal number of 'b's. Pushes 'A' for each 'a' and pops 'A' for each 'b'.",
+    "sample_inputs": ["", "ab", "aabb", "aaabbb"],
+    "sample_rejects": ["aab", "abb", "ba"],
+    "states": ["q0", "q1", "q2"],
+    "alphabet": ["a", "b"],
+    "stack_alphabet": ["Z", "A"],
+    "start_state": "q0",
+    "initial_stack_symbol": "Z",
+    "final_states": ["q2"],
+    "transitions": [
+      { "from_state": "q0", "input_symbol": "a", "stack_pop": "Z", "to_state": "q0", "stack_push": "AZ" },
+      { "from_state": "q0", "input_symbol": "a", "stack_pop": "A", "to_state": "q0", "stack_push": "AA" },
+      { "from_state": "q0", "input_symbol": "b", "stack_pop": "A", "to_state": "q1", "stack_push": "ε" },
+      { "from_state": "q1", "input_symbol": "b", "stack_pop": "A", "to_state": "q1", "stack_push": "ε" },
+      { "from_state": "q1", "input_symbol": "ε", "stack_pop": "Z", "to_state": "q2", "stack_push": "Z" },
+      { "from_state": "q0", "input_symbol": "ε", "stack_pop": "Z", "to_state": "q2", "stack_push": "Z" }
+    ]
+  },
+  "wcwr": {
+    "name": "L = { wcwᴿ | w ∈ {a,b}* }",
+    "description": "Palindrome over {a,b} separated by 'c'. Pushes symbols until 'c', then pops matching symbols in reverse order.",
+    "sample_inputs": ["c", "aca", "bcb", "abcba", "aacaa"],
+    "sample_rejects": ["ab", "acb", "abca"],
+    "states": ["q0", "q1", "q2"],
+    "alphabet": ["a", "b", "c"],
+    "stack_alphabet": ["Z", "A", "B"],
+    "start_state": "q0",
+    "initial_stack_symbol": "Z",
+    "final_states": ["q2"],
+    "transitions": [
+      { "from_state": "q0", "input_symbol": "a", "stack_pop": "Z", "to_state": "q0", "stack_push": "AZ" },
+      { "from_state": "q0", "input_symbol": "b", "stack_pop": "Z", "to_state": "q0", "stack_push": "BZ" },
+      { "from_state": "q0", "input_symbol": "a", "stack_pop": "A", "to_state": "q0", "stack_push": "AA" },
+      { "from_state": "q0", "input_symbol": "a", "stack_pop": "B", "to_state": "q0", "stack_push": "AB" },
+      { "from_state": "q0", "input_symbol": "b", "stack_pop": "A", "to_state": "q0", "stack_push": "BA" },
+      { "from_state": "q0", "input_symbol": "b", "stack_pop": "B", "to_state": "q0", "stack_push": "BB" },
+      { "from_state": "q0", "input_symbol": "c", "stack_pop": "Z", "to_state": "q1", "stack_push": "Z" },
+      { "from_state": "q0", "input_symbol": "c", "stack_pop": "A", "to_state": "q1", "stack_push": "A" },
+      { "from_state": "q0", "input_symbol": "c", "stack_pop": "B", "to_state": "q1", "stack_push": "B" },
+      { "from_state": "q1", "input_symbol": "a", "stack_pop": "A", "to_state": "q1", "stack_push": "ε" },
+      { "from_state": "q1", "input_symbol": "b", "stack_pop": "B", "to_state": "q1", "stack_push": "ε" },
+      { "from_state": "q1", "input_symbol": "ε", "stack_pop": "Z", "to_state": "q2", "stack_push": "Z" }
+    ]
+  },
+  "parentheses": {
+    "name": "Balanced Parentheses",
+    "description": "Recognizes well-formed nested parentheses strings. Pushes 'X' on '(' and pops 'X' on ')'.",
+    "sample_inputs": ["()", "(())", "()()", "((()))"],
+    "sample_rejects": ["(", ")", "())", "(()"],
+    "states": ["q0", "q1"],
+    "alphabet": ["(", ")"],
+    "stack_alphabet": ["Z", "X"],
+    "start_state": "q0",
+    "initial_stack_symbol": "Z",
+    "final_states": ["q1"],
+    "transitions": [
+      { "from_state": "q0", "input_symbol": "(", "stack_pop": "Z", "to_state": "q0", "stack_push": "XZ" },
+      { "from_state": "q0", "input_symbol": "(", "stack_pop": "X", "to_state": "q0", "stack_push": "XX" },
+      { "from_state": "q0", "input_symbol": ")", "stack_pop": "X", "to_state": "q0", "stack_push": "ε" },
+      { "from_state": "q0", "input_symbol": "ε", "stack_pop": "Z", "to_state": "q1", "stack_push": "Z" }
+    ]
+  }
+}
